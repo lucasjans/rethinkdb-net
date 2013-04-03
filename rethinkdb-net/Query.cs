@@ -39,6 +39,21 @@ namespace RethinkDb
     }
 
     [ImmutableObject(true)]
+    public interface IQueryFunction<TReturn> : IQuery
+    {
+    }
+
+    [ImmutableObject(true)]
+    public interface IQueryFunction<TParameter1, TReturn> : IQuery
+    {
+    }
+
+    [ImmutableObject(true)]
+    public interface IQueryFunction<TParameter1, TParameter2, TReturn> : IQuery
+    {
+    }
+
+    [ImmutableObject(true)]
     public interface IGroupByReduction<TReductionType>
     {
         Term GenerateReductionObject(IDatumConverterFactory datumConverterFactory);
@@ -72,6 +87,11 @@ namespace RethinkDb
         }
 
         public static FilterQuery<T> Filter<T>(this ISequenceQuery<T> target, Expression<Func<T, bool>> filterExpression)
+        {
+            return new FilterQuery<T>(target, new ExpressionTreeQueryFunction<T, bool>(filterExpression));
+        }
+
+        public static FilterQuery<T> Filter<T>(this ISequenceQuery<T> target, IQueryFunction<T, bool> filterExpression)
         {
             return new FilterQuery<T>(target, filterExpression);
         }
@@ -116,19 +136,34 @@ namespace RethinkDb
             return new CountQuery<T>(target);
         }
 
-        public static ExprQuery<T> Expr<T>(T @object)
+        public static JavaScriptQueryFunction<TReturn> Js<TReturn>(string js)
+        {
+            return new JavaScriptQueryFunction<TReturn>(js);
+        }
+
+        public static JavaScriptQueryFunction<TParameter1, TReturn> Js<TParameter1, TReturn>(string js)
+        {
+            return new JavaScriptQueryFunction<TParameter1, TReturn>(js);
+        }
+
+        public static ExprQuery<T> ExprObj<T>(T @object)
         {
             return new ExprQuery<T>(@object);
         }
 
-        public static ExprQuery<T> Expr<T>(Expression<Func<T>> objectExpr)
-        {
-            return new ExprQuery<T>(objectExpr);
-        }
-
-        public static ExprSequenceQuery<T> Expr<T>(IEnumerable<T> enumerable)
+        public static ExprSequenceQuery<T> ExprSeq<T>(IEnumerable<T> enumerable)
         {
             return new ExprSequenceQuery<T>(enumerable);
+        }
+
+        public static ExprQuery<T> ExprFunc<T>(Expression<Func<T>> objectExpr)
+        {
+            return new ExprQuery<T>(new ExpressionTreeQueryFunction<T>(objectExpr));
+        }
+
+        public static ExprQuery<T> ExprFunc<T>(IQueryFunction<T> objectExpr)
+        {
+            return new ExprQuery<T>(objectExpr);
         }
 
         public static MapQuery<TOriginal, TTarget> Map<TOriginal, TTarget>(this ISequenceQuery<TOriginal> sequenceQuery, Expression<Func<TOriginal, TTarget>> mapExpression)

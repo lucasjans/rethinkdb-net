@@ -266,6 +266,19 @@ namespace RethinkDb.Test
         }
 
         [Test]
+        public void FilterJs()
+        {
+            var e = connection.Run(testTable.Filter(Query.Js<TestObject, bool>("(function(row) { return row(\"name\").startsWith(\"1\"); })")));
+            int count = 0;
+            foreach (var row in e)
+            {
+                count++;
+                Assert.That(row.Id, Is.EqualTo("1"));
+            }
+            Assert.That(count, Is.EqualTo(1));
+        }
+
+        [Test]
         public void Map()
         {
             DoMap().Wait();

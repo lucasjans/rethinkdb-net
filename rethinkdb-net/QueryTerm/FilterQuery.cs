@@ -7,9 +7,9 @@ namespace RethinkDb.QueryTerm
     public class FilterQuery<T> : ISequenceQuery<T>
     {
         private readonly ISequenceQuery<T> sequenceQuery;
-        private readonly Expression<Func<T, bool>> filterExpression;
+        private readonly IQueryFunction<T, bool> filterExpression;
 
-        public FilterQuery(ISequenceQuery<T> sequenceQuery, Expression<Func<T, bool>> filterExpression)
+        public FilterQuery(ISequenceQuery<T> sequenceQuery, IQueryFunction<T, bool> filterExpression)
         {
             this.sequenceQuery = sequenceQuery;
             this.filterExpression = filterExpression;
@@ -22,11 +22,7 @@ namespace RethinkDb.QueryTerm
                 type = Term.TermType.FILTER,
             };
             filterTerm.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory));
-
-            if (filterExpression.NodeType != ExpressionType.Lambda)
-                throw new NotSupportedException("Unsupported expression type");
-            filterTerm.args.Add(ExpressionUtils.CreateFunctionTerm<T, bool>(datumConverterFactory, filterExpression));
-
+            filterTerm.args.Add(filterExpression.GenerateTerm(datumConverterFactory));
             return filterTerm;
         }
     }

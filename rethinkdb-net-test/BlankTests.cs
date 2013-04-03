@@ -51,7 +51,7 @@ namespace RethinkDb.Test
                     new TestObject() { Id = "987", Name = "654", SomeNumber = 321 },
                 },
             };
-            var resp = await connection.RunAsync(Query.Expr(obj));
+            var resp = await connection.RunAsync(Query.ExprObj(obj));
             Assert.That(resp, Is.Not.Null);
             Assert.That(resp, Is.EqualTo(obj));
         }
@@ -64,7 +64,7 @@ namespace RethinkDb.Test
 
         private async Task DoExprExpression<T>(Expression<Func<T>> objectExpr, T value)
         {
-            var resp = await connection.RunAsync(Query.Expr(objectExpr));
+            var resp = await connection.RunAsync(Query.ExprFunc(objectExpr));
             Assert.That(resp, Is.EqualTo(value));
         }
 
@@ -76,7 +76,7 @@ namespace RethinkDb.Test
 
         private async Task DoExprSequence<T>(IEnumerable<T> enumerable)
         {
-            var asyncEnumerable = connection.RunAsync(Query.Expr(enumerable));
+            var asyncEnumerable = connection.RunAsync(Query.ExprSeq(enumerable));
             var count = 0;
             while (true)
             {
@@ -96,7 +96,7 @@ namespace RethinkDb.Test
 
         private async Task DoExprNth<T>(IEnumerable<T> enumerable)
         {
-            var resp = await connection.RunAsync(Query.Expr(enumerable).Nth(1));
+            var resp = await connection.RunAsync(Query.ExprSeq(enumerable).Nth(1));
             Assert.That(resp, Is.EqualTo(2));
         }
 
@@ -108,7 +108,7 @@ namespace RethinkDb.Test
 
         private async Task DoExprDistinct()
         {
-            var asyncEnumerable = connection.RunAsync(Query.Expr((IEnumerable<double>)new double[] { 1, 2, 3, 2, 1 }).Distinct());
+            var asyncEnumerable = connection.RunAsync(Query.ExprSeq(new double[] { 1, 2, 3, 2, 1 }).Distinct());
             var count = 0;
             while (true)
             {
@@ -123,7 +123,7 @@ namespace RethinkDb.Test
         [Test]
         public void AnonymousTypeExpression()
         {
-            var anonValue = connection.Run(Query.Expr(() => new { Prop1 = 1.0, Prop2 = 2.0, Prop3 = "3" }));
+            var anonValue = connection.Run(Query.ExprFunc(() => new { Prop1 = 1.0, Prop2 = 2.0, Prop3 = "3" }));
             Assert.That(anonValue.Prop1, Is.EqualTo(1.0));
             Assert.That(anonValue.Prop2, Is.EqualTo(2.0));
             Assert.That(anonValue.Prop3, Is.EqualTo("3"));
@@ -132,10 +132,17 @@ namespace RethinkDb.Test
         [Test]
         public void AnonymousTypeValue()
         {
-            var anonValue = connection.Run(Query.Expr(new { Prop1 = 1.0, Prop2 = 2.0, Prop3 = "3" }));
+            var anonValue = connection.Run(Query.ExprObj(new { Prop1 = 1.0, Prop2 = 2.0, Prop3 = "3" }));
             Assert.That(anonValue.Prop1, Is.EqualTo(1.0));
             Assert.That(anonValue.Prop2, Is.EqualTo(2.0));
             Assert.That(anonValue.Prop3, Is.EqualTo("3"));
+        }
+
+        [Test]
+        public void ExprJs()
+        {
+            var num = connection.Run(Query.ExprFunc(Query.Js<double>("178")));
+            Assert.That(num, Is.EqualTo(178.0));
         }
     }
 }

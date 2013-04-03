@@ -7,14 +7,14 @@ namespace RethinkDb.QueryTerm
     public class ExprQuery<T> : ISingleObjectQuery<T>
     {
         private readonly T @object;
-        private readonly Expression<Func<T>> objectExpr;
+        private readonly IQueryFunction<T> objectExpr;
 
         public ExprQuery(T @object)
         {
             this.@object = @object;
         }
 
-        public ExprQuery(Expression<Func<T>> objectExpr)
+        public ExprQuery(IQueryFunction<T> objectExpr)
         {
             this.objectExpr = objectExpr;
         }
@@ -23,7 +23,7 @@ namespace RethinkDb.QueryTerm
         {
             if (objectExpr != null)
             {
-                return ExpressionUtils.CreateValueTerm<T>(datumConverterFactory, objectExpr);
+                return objectExpr.GenerateTerm(datumConverterFactory);
             }
             else
             {
