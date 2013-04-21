@@ -9,6 +9,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using ProtoBuf;
 using RethinkDb.Spec;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
+using System.Security.Authentication;
 
 namespace RethinkDb
 {
@@ -16,9 +19,9 @@ namespace RethinkDb
     {
         private static TaskFactory taskFactory = new TaskFactory();
         private static byte[] connectHeader = null;
-       
+
         private Socket socket;
-        private NetworkStream stream;
+        private Stream stream;
         private long nextToken = 1;
         private long writeTokenLock = 0;
         private IDictionary<long, TaskCompletionSource<Response>> tokenResponse = new ConcurrentDictionary<long, TaskCompletionSource<Response>>();
@@ -57,7 +60,7 @@ namespace RethinkDb
         {
             get;
             set;
-        }       
+        }
 
         public TimeSpan QueryTimeout
         {
@@ -123,13 +126,83 @@ namespace RethinkDb
             throw new RethinkDbNetworkException("Failed to resolve a connectable address.");
         }
 
+        private static X509Certificate2 certAuthority = new X509Certificate2("/home/mfenniak/Development/rethinkdb-tls/ca.crt");
+
+        private bool RemoteCertificateValidator(
+            Object sender,
+            X509Certificate certificate,
+            X509Chain chain,
+            SslPolicyErrors sslPolicyErrors)
+        {
+            Logger.Debug("RemoteCertificateValidator: Issuer={0}; Subject={1}; HashString={2}", certificate.Issuer, certificate.Subject, certificate.GetCertHashString());
+            Logger.Debug("sslPolicyErrors = {0}", sslPolicyErrors);
+
+            if ((sslPolicyErrors & SslPolicyErrors.RemoteCertificateChainErrors) == SslPolicyErrors.RemoteCertificateChainErrors)
+            {
+                X509Chain chain0 = new X509Chain();
+                chain0.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                // add all your extra certificate chain
+                chain0.ChainPolicy.ExtraStore.Add(certAuthority);
+                chain0.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                var isValid = chain0.Build(new X509Certificate2(certificate));
+                Logger.Debug("RemoteCertificateValidator: Build={0}", isValid);
+                if (isValid)
+                {
+                    Logger.Debug("Removing RemoteCertificateChainErrors error because the remote cert matched our custom CA");
+                    sslPolicyErrors &= (~SslPolicyErrors.RemoteCertificateChainErrors);
+                }
+            }
+
+            // Gonna just ignore these errors... the name mismatch one we can easily fix by using correct hostnames
+            // in our cert's CNs.  The RemoteCertificateNotAvailable one I don't really understand.
+            sslPolicyErrors &= (~SslPolicyErrors.RemoteCertificateNameMismatch);
+            sslPolicyErrors &= (~SslPolicyErrors.RemoteCertificateNotAvailable);
+
+            Logger.Debug("sslPolicyErrors = {0}", sslPolicyErrors);
+            return sslPolicyErrors == SslPolicyErrors.None;
+        }
+
+        public X509Certificate LocalCertificateSelector(
+            Object sender,
+            string targetHost,
+            X509CertificateCollection localCertificates,
+            X509Certificate remoteCertificate,
+            string[] acceptableIssuers)
+        {
+            Logger.Debug("LocalCertificateSelector");
+
+            if (acceptableIssuers != null &&
+                acceptableIssuers.Length > 0 &&
+                localCertificates != null &&
+                localCertificates.Count > 0)
+            {
+                // Use the first certificate that is from an acceptable issuer.
+                foreach (X509Certificate certificate in localCertificates)
+                {
+                    string issuer = certificate.Issuer;
+                    if (Array.IndexOf(acceptableIssuers, issuer) != -1)
+                    {
+                        Logger.Debug("Returning acceptable cert");
+                        return certificate;
+                    }
+                }
+            }
+            if (localCertificates != null && localCertificates.Count > 0)
+            {
+                Logger.Debug("Returning first cert");
+                return localCertificates [0];
+            }
+
+            return null;
+        }
+
         private async Task DoTryConnect(IPEndPoint endpoint, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
             Socket socket = null;
-            NetworkStream stream = null;
+            Stream stream = null;
 
             try
             {
@@ -151,6 +224,19 @@ namespace RethinkDb
                 }
 
                 stream = new NetworkStream(socket, true);
+
+                Logger.Debug("Creating SslStream");
+                var sslStream = new SslStream(stream, false, RemoteCertificateValidator, LocalCertificateSelector /*, EncryptionPolicy.RequireEncryption */);
+
+                Logger.Debug("Loading cert");
+                var cert = new X509Certificate2("/home/mfenniak/Development/rethinkdb-tls/client.pfx", "password");
+
+                Logger.Debug("Authenticating as client");
+                await sslStream.AuthenticateAsClientAsync("localhost", new X509CertificateCollection(new X509Certificate[] { cert }), SslProtocols.Tls, false);
+
+                Logger.Debug("TLS established");
+                stream = sslStream;
+
                 await stream.WriteAsync(connectHeader, 0, connectHeader.Length, cancellationToken);
 
                 Logger.Debug("Sent ReQL header");
