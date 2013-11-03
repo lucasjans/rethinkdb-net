@@ -25,18 +25,18 @@ namespace RethinkDb.QueryTerm
             this.nonAtomic = nonAtomic;
         }
 
-        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory)
+        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter)
         {
             var updateTerm = new Term()
             {
                 type = Term.TermType.UPDATE,
             };
             if (singleObjectTerm != null)
-                updateTerm.args.Add(singleObjectTerm.GenerateTerm(datumConverterFactory));
+                updateTerm.args.Add(singleObjectTerm.GenerateTerm(datumConverterFactory, expressionConverter));
             else
-                updateTerm.args.Add(sequenceTerm.GenerateTerm(datumConverterFactory));
+                updateTerm.args.Add(sequenceTerm.GenerateTerm(datumConverterFactory, expressionConverter));
 
-            updateTerm.args.Add(ExpressionUtils.CreateFunctionTerm<T, T>(datumConverterFactory, updateExpression));
+            updateTerm.args.Add(ExpressionUtils.CreateFunctionTerm<T, T>(datumConverterFactory, expressionConverter, updateExpression));
 
             AddOptionalArguments(updateTerm);
             if (nonAtomic)

@@ -9,20 +9,24 @@ namespace RethinkDb
     {
         #region IConnection minimalism
 
-        public static Task<T> RunAsync<T>(this IConnection connection, IScalarQuery<T> queryObject, IDatumConverterFactory datumConverterFactory = null, CancellationToken? cancellationToken = null)
+        public static Task<T> RunAsync<T>(this IConnection connection, IScalarQuery<T> queryObject, IDatumConverterFactory datumConverterFactory = null, IExpressionConverter expressionConverter = null, CancellationToken? cancellationToken = null)
         {
             if (datumConverterFactory == null)
                 datumConverterFactory = connection.DatumConverterFactory;
+            if (expressionConverter == null)
+                expressionConverter = connection.ExpressionConverter;
             if (!cancellationToken.HasValue)
                 cancellationToken = new CancellationTokenSource(connection.QueryTimeout).Token;
-            return connection.RunAsync<T>(datumConverterFactory, queryObject, cancellationToken.Value);
+            return connection.RunAsync<T>(datumConverterFactory, expressionConverter, queryObject, cancellationToken.Value);
         }
 
-        public static IAsyncEnumerator<T> RunAsync<T>(this IConnection connection, ISequenceQuery<T> queryObject, IDatumConverterFactory datumConverterFactory = null)
+        public static IAsyncEnumerator<T> RunAsync<T>(this IConnection connection, ISequenceQuery<T> queryObject, IDatumConverterFactory datumConverterFactory = null, IExpressionConverter expressionConverter = null)
         {
             if (datumConverterFactory == null)
                 datumConverterFactory = connection.DatumConverterFactory;
-            return connection.RunAsync<T>(datumConverterFactory, queryObject);
+            if (expressionConverter == null)
+                expressionConverter = connection.ExpressionConverter;
+            return connection.RunAsync<T>(datumConverterFactory, expressionConverter, queryObject);
         }
 
         #endregion

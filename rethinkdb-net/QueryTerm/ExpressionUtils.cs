@@ -21,6 +21,12 @@ namespace RethinkDb.QueryTerm
             return converter.CreateFunctionTerm(expression);
         }
 
+        public static Term CreateFunctionTerm<TParameter1, TReturn>(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter, Expression<Func<TParameter1, TReturn>> expression)
+        {
+            var converter = new SingleParameterLambdaExpressionConverter<TParameter1, TReturn>(datumConverterFactory, expressionConverter);
+            return converter.CreateFunctionTerm(expression);
+        }
+
         public static Term CreateFunctionTerm<TParameter1, TParameter2, TReturn>(IDatumConverterFactory datumConverterFactory, Expression<Func<TParameter1, TParameter2, TReturn>> expression)
         {
             var converter = new TwoParameterLambda<TParameter1, TParameter2, TReturn>(datumConverterFactory);

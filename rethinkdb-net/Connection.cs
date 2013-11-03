@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ProtoBuf;
 using RethinkDb.DatumConverters;
+using RethinkDb.ExpressionConverters;
 using RethinkDb.Spec;
 using RethinkDb.Logging;
 
@@ -43,6 +44,7 @@ namespace RethinkDb
                 ListDatumConverterFactory.Instance,
                 TimeSpanDatumConverterFactory.Instance
             );
+            ExpressionConverter = ConstantExpressionConverter.Instance;
             ConnectTimeout = QueryTimeout = TimeSpan.FromSeconds(30);
         }
 
@@ -53,6 +55,12 @@ namespace RethinkDb
         }
 
         public IEnumerable<EndPoint> EndPoints
+        {
+            get;
+            set;
+        }
+
+        public IExpressionConverter ExpressionConverter
         {
             get;
             set;
@@ -421,12 +429,12 @@ namespace RethinkDb
             }
         }
 
-        public async Task<T> RunAsync<T>(IDatumConverterFactory datumConverterFactory, IScalarQuery<T> queryObject, CancellationToken cancellationToken)
+        public async Task<T> RunAsync<T>(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter, IScalarQuery<T> queryObject, CancellationToken cancellationToken)
         {
             var query = new Spec.Query();
             query.token = GetNextToken();
             query.type = Spec.Query.QueryType.START;
-            query.query = queryObject.GenerateTerm(datumConverterFactory);
+            query.query = queryObject.GenerateTerm(datumConverterFactory, expressionConverter);
 
             var response = await InternalRunQuery(query, cancellationToken);
 
@@ -447,15 +455,16 @@ namespace RethinkDb
             }
         }
 
-        public IAsyncEnumerator<T> RunAsync<T>(IDatumConverterFactory datumConverterFactory, ISequenceQuery<T> queryObject)
+        public IAsyncEnumerator<T> RunAsync<T>(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter, ISequenceQuery<T> queryObject)
         {
-            return new QueryEnumerator<T>(this, datumConverterFactory, queryObject);
+            return new QueryEnumerator<T>(this, datumConverterFactory, expressionConverter, queryObject);
         }
 
         private class QueryEnumerator<T> : IAsyncEnumerator<T>
         {
             private readonly Connection connection;
             private readonly IDatumConverterFactory datumConverterFactory;
+            private readonly IExpressionConverter expressionConverter;
             private readonly IDatumConverter<T> datumConverter;
             private readonly ISequenceQuery<T> queryObject;
             private readonly StackTrace stackTrace;
@@ -465,10 +474,11 @@ namespace RethinkDb
             private int lastResponseIndex = 0;
             private bool disposed = false;
 
-            public QueryEnumerator(Connection connection, IDatumConverterFactory datumConverterFactory, ISequenceQuery<T> queryObject)
+            public QueryEnumerator(Connection connection, IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter, ISequenceQuery<T> queryObject)
             {
                 this.connection = connection;
                 this.datumConverterFactory = datumConverterFactory;
+                this.expressionConverter = expressionConverter;
                 this.datumConverter = datumConverterFactory.Get<T>();
                 this.queryObject = queryObject;
                 this.stackTrace = new StackTrace(true);
@@ -588,7 +598,7 @@ namespace RethinkDb
                     query = new Spec.Query();
                     query.token = connection.GetNextToken();
                     query.type = Spec.Query.QueryType.START;
-                    query.query = this.queryObject.GenerateTerm(datumConverterFactory);
+                    query.query = this.queryObject.GenerateTerm(datumConverterFactory, expressionConverter);
                     await ReissueQuery(cancellationToken);
                 }
 

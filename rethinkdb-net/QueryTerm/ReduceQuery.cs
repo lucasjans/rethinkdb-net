@@ -26,13 +26,13 @@ namespace RethinkDb.QueryTerm
             this.@base = @base;
         }
 
-        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory)
+        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter)
         {
             var reduceTerm = new Term()
             {
                 type = Term.TermType.REDUCE,
             };
-            reduceTerm.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory));
+            reduceTerm.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory, expressionConverter));
             reduceTerm.args.Add(ExpressionUtils.CreateFunctionTerm<T, T, T>(datumConverterFactory, reduceFunction));
 
             if (this.baseProvided)

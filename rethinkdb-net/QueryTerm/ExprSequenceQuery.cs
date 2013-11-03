@@ -15,7 +15,7 @@ namespace RethinkDb.QueryTerm
             this.enumerable = enumerable;
         }
 
-        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory)
+        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter)
         {
             var sequenceTerm = new Term()
             {

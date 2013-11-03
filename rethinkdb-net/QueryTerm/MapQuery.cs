@@ -15,13 +15,13 @@ namespace RethinkDb.QueryTerm
             this.mapExpression = mapExpression;
         }
 
-        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory)
+        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter)
         {
             var mapTerm = new Term()
             {
                 type = Term.TermType.MAP,
             };
-            mapTerm.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory));
+            mapTerm.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory, expressionConverter));
             mapTerm.args.Add(ExpressionUtils.CreateFunctionTerm<TOriginal, TTarget>(datumConverterFactory, mapExpression));
             return mapTerm;
         }

@@ -28,13 +28,13 @@ namespace RethinkDb.QueryTerm
             get { return orderByMembers; }
         }
 
-        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory)
+        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter)
         {
             var orderByTerm = new Term()
             {
                 type = Term.TermType.ORDERBY,
             };
-            orderByTerm.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory));
+            orderByTerm.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory, expressionConverter));
             orderByTerm.args.AddRange(GetMembers(datumConverterFactory));
             return orderByTerm;
         }

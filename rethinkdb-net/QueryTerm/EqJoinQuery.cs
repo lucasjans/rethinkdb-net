@@ -20,15 +20,15 @@ namespace RethinkDb.QueryTerm
             this.indexName = indexName;
         }
 
-        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory)
+        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter)
         {
             var term = new Term()
             {
                 type = Term.TermType.EQ_JOIN,
             };
-            term.args.Add(leftQuery.GenerateTerm(datumConverterFactory));
+            term.args.Add(leftQuery.GenerateTerm(datumConverterFactory, expressionConverter));
             term.args.Add(GetMemberName(datumConverterFactory));
-            term.args.Add(rightQuery.GenerateTerm(datumConverterFactory));
+            term.args.Add(rightQuery.GenerateTerm(datumConverterFactory, expressionConverter));
 
             if (!String.IsNullOrEmpty(indexName))
             {

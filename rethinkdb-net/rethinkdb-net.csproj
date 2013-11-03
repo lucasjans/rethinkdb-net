@@ -171,6 +171,9 @@
     <Compile Include="Interfaces\IScalarQuery.cs" />
     <Compile Include="DatumConverters\ListDatumConverterFactory.cs" />
     <Compile Include="DatumConverters\TimeSpanDatumConverterFactory.cs" />
+    <Compile Include="ExpressionConverters\ConstantExpressionConverter.cs" />
+    <Compile Include="Interfaces\IExpressionConverter.cs" />
+    <Compile Include="ExpressionConverters\SingleParameterLambdaExpressionConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -185,4 +188,7 @@
   </Target>
   -->
   <ItemGroup />
+  <ItemGroup>
+    <Folder Include="ExpressionConverters\" />
+  </ItemGroup>
 </Project>

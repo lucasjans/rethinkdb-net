@@ -12,6 +12,12 @@ namespace RethinkDb
             set;
         }
 
+        IExpressionConverter ExpressionConverter
+        {
+            get;
+            set;
+        }
+
         ILogger Logger
         {
             get;
@@ -26,9 +32,9 @@ namespace RethinkDb
 
         #region Asynchronous API; synchronous API is provided by extension methods
 
-        Task<T> RunAsync<T>(IDatumConverterFactory datumConverterFactory, IScalarQuery<T> queryObject, CancellationToken cancellationToken);
+        Task<T> RunAsync<T>(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter, IScalarQuery<T> queryObject, CancellationToken cancellationToken);
 
-        IAsyncEnumerator<T> RunAsync<T>(IDatumConverterFactory datumConverterFactory, ISequenceQuery<T> queryObject);
+        IAsyncEnumerator<T> RunAsync<T>(IDatumConverterFactory datumConverterFactory, IExpressionConverter expressionConverter, ISequenceQuery<T> queryObject);
 
         #endregion
     }
