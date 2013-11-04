@@ -44,7 +44,10 @@ namespace RethinkDb
                 ListDatumConverterFactory.Instance,
                 TimeSpanDatumConverterFactory.Instance
             );
-            ExpressionConverter = ConstantExpressionConverter.Instance;
+            ExpressionConverter = new AggregateExpressionConverter(
+                ConstantExpressionConverter.Instance,
+                BinaryExpressionConverter.Instance
+            );
             ConnectTimeout = QueryTimeout = TimeSpan.FromSeconds(30);
         }
 
