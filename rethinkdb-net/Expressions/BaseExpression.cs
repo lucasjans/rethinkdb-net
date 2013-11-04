@@ -236,7 +236,8 @@ namespace RethinkDb.Expressions
                         var createFunctionTermMethod = typeof(ExpressionUtils)
                             .GetMethods(BindingFlags.Public | BindingFlags.Static)
                             .Single(m => m.Name == "CreateFunctionTerm" && 
-                                         m.GetGenericArguments().Length == 2);
+                                         m.GetGenericArguments().Length == 2 &&
+                                         m.GetParameters().Length == 2);
                         createFunctionTermMethod = createFunctionTermMethod.MakeGenericMethod(enumerableElementType, typeof(bool));
 
                         var functionTerm = (Term)createFunctionTermMethod.Invoke(null, new object[] { datumConverterFactory, predicate });
