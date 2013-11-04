@@ -46,7 +46,9 @@ namespace RethinkDb
             );
             ExpressionConverter = new AggregateExpressionConverter(
                 ConstantExpressionConverter.Instance,
-                BinaryExpressionConverter.Instance
+                BinaryExpressionConverter.Instance,
+                // Always configure this as the last expression converter:
+                ClientSideEvaluationExpressionConverter.Instance
             );
             ConnectTimeout = QueryTimeout = TimeSpan.FromSeconds(30);
         }

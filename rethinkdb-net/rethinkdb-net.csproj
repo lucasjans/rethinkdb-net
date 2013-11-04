@@ -176,6 +176,7 @@
     <Compile Include="ExpressionConverters\SingleParameterLambdaExpressionConverter.cs" />
     <Compile Include="ExpressionConverters\BinaryExpressionConverter.cs" />
     <Compile Include="ExpressionConverters\AggregateExpressionConverter.cs" />
+    <Compile Include="ExpressionConverters\ClientSideEvaluationExpressionConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
