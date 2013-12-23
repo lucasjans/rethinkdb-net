@@ -29,15 +29,15 @@ namespace RethinkDb.QueryTerm
             this.@base = @base;
         }
 
-        public Term GenerateTerm (IDatumConverterFactory datumConverterFactory)
+        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory, IExpressionConverterFactory expressionConverterFactory)
         {
             var retval = new Term() {
                 type = Term.TermType.GROUPED_MAP_REDUCE,
             };
-            retval.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory));
-            retval.args.Add(ExpressionUtils.CreateFunctionTerm(datumConverterFactory, grouping));
-            retval.args.Add(ExpressionUtils.CreateFunctionTerm(datumConverterFactory, mapping));
-            retval.args.Add(ExpressionUtils.CreateFunctionTerm(datumConverterFactory, reduction));
+            retval.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory, expressionConverterFactory));
+            retval.args.Add(ExpressionUtils.CreateFunctionTerm(datumConverterFactory, expressionConverterFactory, grouping));
+            retval.args.Add(ExpressionUtils.CreateFunctionTerm(datumConverterFactory, expressionConverterFactory, mapping));
+            retval.args.Add(ExpressionUtils.CreateFunctionTerm(datumConverterFactory, expressionConverterFactory, reduction));
 
             if (this.baseProvided)
             {

@@ -20,13 +20,13 @@ namespace RethinkDb.QueryTerm
             this.groupKeyConstructor = groupKeyConstructor;
         }
 
-        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory)
+        public Term GenerateTerm(IDatumConverterFactory datumConverterFactory, IExpressionConverterFactory expressionConverterFactory)
         {
             var term = new Term()
             {
                 type = Term.TermType.GROUPBY,
             };
-            term.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory));
+            term.args.Add(sequenceQuery.GenerateTerm(datumConverterFactory, expressionConverterFactory));
 
             var propertyTerm = new Term() {
                 type = Term.TermType.MAKE_ARRAY
